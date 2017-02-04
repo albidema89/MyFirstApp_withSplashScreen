@@ -1,0 +1,61 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.myfirstapp_withsplashscreen">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <!-- Splash screen -->
+        <activity
+            android:name="com.example.myfirstapp_withsplashscreen.SplashScreen"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Black.NoTitleBar" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Main activity -->
+        <activity
+            android:name="com.example.myfirstapp_withsplashscreen.MainActivity"
+            android:label="@string/app_name" >
+        </activity>
+
+        <activity android:name=".DisplaySchedule" />
+
+        <receiver android:name="UpdateServiceReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <category android:name="android.intent.category.HOME"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.example.myfirstapp_withsplashscreen.SINGLE_UPDATE"/>
+            </intent-filter>
+        </receiver>
+
+        <service android:name="UpdateService"
+            android:permission="android.permission.BIND_JOB_SERVICE" >
+            <intent-filter>
+                <action android:name="com.example.myfirstapp_withsplashscreen.UpdateService"/>/
+            </intent-filter>
+        </service>
+
+        <service android:name="UpdateIntentService">
+            <intent-filter>
+                <action android:name="UpdateIntent.SCHEDULED_UPDATE"/>
+                <action android:name="UpdateIntent.SINGLE_UPDATE"/>
+            </intent-filter>
+        </service>
+
+    </application>
+
+</manifest>
