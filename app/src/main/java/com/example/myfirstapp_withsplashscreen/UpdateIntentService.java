@@ -40,13 +40,25 @@ public class UpdateIntentService extends IntentService {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
 
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.logo_fipav1)
-                        .setContentTitle("Aggiornamento riuscito")
-                        .setContentText("Calendari e classifiche aggiornati! " +SplashScreen.numero_di_prova);
-        mBuilder.setContentIntent(resultPendingIntent);
-        mBuilder.setAutoCancel(true);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
+        mBuilder.setSmallIcon(R.drawable.logo_fipav1);
+        mBuilder.setContentTitle("Aggiornamento riuscito");
+        mBuilder.setContentText("Calendari e classifiche aggiornati! " +SplashScreen.numero_di_prova);
+        //mBuilder.setContentIntent(resultPendingIntent);
+        //mBuilder.setAutoCancel(true);
+
+        // Sets an ID for the notification
+        int mNotificationId = 001;
+        // Gets an instance of the NotificationManager service
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        //mNotifyMgr.notify(mNotificationId, mBuilder.build());
+
+        if(action.equals("UpdateIntent.SINGLE_UPDATE")) {
+            mBuilder.setContentTitle("Aggiornamento calendari in corso");
+            mBuilder.setContentText("E' in corso l'aggiornamento dei calendari: non riavviare l'applicazione");
+            mNotifyMgr.notify(mNotificationId, mBuilder.build());
+        }
 
         Element schedule;
         ArrayList<String> leagues_links_array = new ArrayList<String>();
@@ -61,21 +73,17 @@ public class UpdateIntentService extends IntentService {
 
         try {
 
-            //Log.d("myTag", "starting downloading teams");
             Document generic_doc = Jsoup.connect("http://www.fipav.pavia.it/calendari.asp").get();
             schedule = generic_doc.getElementsByClass("tabella").get(0); // la prima tabella contiene i campionati
 
             String absHref_mod = "";
 
             Elements rows = schedule.select("tr");
-            int table_size = rows.size() - 1;
-            //Log.d("myTag", "starting parsing the leagues table with " +table_size +" rows");
             if(rows.size()>0) {
                 for(int i=0;i<rows.size();i++)
                 {
                     Element row = rows.get(i);
                     Elements cols = row.select("td");
-
 
                     for(int j=0; j<cols.size(); j++) {
                         Element temp = cols.get(j);
@@ -116,15 +124,12 @@ public class UpdateIntentService extends IntentService {
             }
 
             for (int i = 0; i < leagues_array.size(); i++) {
-                //Log.d("myTag", "starting download at: " + leagues_links_array.get(i));
                 Document schedule_doc = Jsoup.connect(leagues_links_array.get(i)).get();
                 schedule = schedule_doc.getElementsByClass("tabella").get(1); // la prima tabella contiene i campionati e possiamo scartarla
 
                 ArrayList<RowSchedule> single_league_schedule = new ArrayList<>();
 
                 rows = schedule.select("tr");
-                table_size = rows.size() - 1;
-                //Log.d("myTag", "starting parsing the schedule table with " + table_size + " rows");
                 for (int j = 1; j < rows.size(); j++) // la prima riga contiene le intestazioni della tabella e possiamo scartarla
                 {
                     RowSchedule schedule_row = new RowSchedule();
@@ -146,7 +151,6 @@ public class UpdateIntentService extends IntentService {
                 full_schedule_array.add(single_league_schedule);
             }
 
-            writer=null;
             tempFile = new File(cDir.getPath() + "/" + "full_schedule_array.txt");
             try {
                 writer = new FileWriter(tempFile);
@@ -169,8 +173,6 @@ public class UpdateIntentService extends IntentService {
                 }
                 // Closing the writer object
                 writer.close();
-
-                //last_update = "Ultimo aggiornamento " +actual_day +"/" +actual_month +"/" +actual_year +" alle ore " +actual_hour +":" +actual_minute;
             } catch (IOException e) {
                 e.printStackTrace();
 
@@ -181,15 +183,12 @@ public class UpdateIntentService extends IntentService {
             }
 
             for (int i = 0; i < leagues_array.size(); i++) {
-                //Log.d("myTag", "starting download at: " + leagues_links_array.get(i).replace("calendari", "classifica"));
                 Document schedule_doc = Jsoup.connect(leagues_links_array.get(i).replace("calendari", "classifica")).get();
                 schedule = schedule_doc.getElementsByClass("tabella").get(1); // la prima tabella contiene i campionati e possiamo scartarla
 
                 ArrayList<RowRanking> single_league_schedule = new ArrayList<>();
 
                 rows = schedule.select("tr");
-                table_size = rows.size() - 1;
-                //Log.d("myTag", "starting parsing the ranking table with " + table_size + " rows");
                 for (int j = 1; j < rows.size(); j++) // la prima riga contiene le intestazioni della tabella e possiamo scartarla
                 {
                     RowRanking ranking_row = new RowRanking();
@@ -266,12 +265,10 @@ public class UpdateIntentService extends IntentService {
             Intent send_intent = new Intent(this, SplashScreen.class);
             send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(send_intent);
+            mNotifyMgr.cancel(mNotificationId);
         } else {
-            // Sets an ID for the notification
-            int mNotificationId = 001;
-            // Gets an instance of the NotificationManager service
-            NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            // Builds the notification and issues it.
+            mBuilder.setContentIntent(resultPendingIntent);
+            mBuilder.setAutoCancel(true);
             mNotifyMgr.notify(mNotificationId, mBuilder.build());
         }
     }
