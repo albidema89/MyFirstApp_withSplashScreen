@@ -25,10 +25,14 @@ public class SplashScreen extends Activity {
     Element schedule;
     ArrayList<String> leagues_links_array = new ArrayList<String>();
 
-    public static ArrayList<String> leagues_array = new ArrayList<String>();
-    public static ArrayList<ArrayList<RowSchedule>> full_schedule_array = new ArrayList<ArrayList<RowSchedule>>();
-    public static ArrayList<ArrayList<RowRanking>> full_ranking_array = new ArrayList<ArrayList<RowRanking>>();
-    public static ArrayList<ArrayList> full_teams_array = new ArrayList<ArrayList>();
+    static ArrayList<String> leagues_array = new ArrayList<String>();
+    static ArrayList<ArrayList<RowSchedule>> full_schedule_array = new ArrayList<ArrayList<RowSchedule>>();
+    static ArrayList<ArrayList<RowRanking>> full_ranking_array = new ArrayList<ArrayList<RowRanking>>();
+    static ArrayList<ArrayList> full_teams_array = new ArrayList<ArrayList>();
+
+    ArrayList<RowSchedule> favorite_schedule_array = new ArrayList<RowSchedule>();
+    ArrayList<RowRanking> favorite_ranking_array = new ArrayList<RowRanking>();
+    int favorite_index = 0;
 
     public static String last_update = "";
 
@@ -167,6 +171,89 @@ public class SplashScreen extends Activity {
                         }
                     }
                     full_teams_array.add(single_league_teams);
+                }
+
+                // Try to load this files only if a favorite league and team have been set
+                //if( !(MainActivity.favorite_league.equals("")) && !(MainActivity.favorite_team.equals(""))) {
+                try {
+
+                    Log.d("SplashScreen", "starting reading favorites");
+                    tempFile = new File(cDir.getPath() + "/" + "favorite.txt");
+                    Log.d("SplashScreen", "path is  " +cDir.getPath());
+                    fReader = new FileReader(tempFile);
+                    bReader = new BufferedReader(fReader);
+
+                    if ((strLine = bReader.readLine()) != null) MainActivity.favorite_league = strLine;
+                    Log.d("SplashScreen", "read league is " +strLine);
+                    if ((strLine = bReader.readLine()) != null) MainActivity.favorite_team = strLine;
+                    Log.d("SplashScreen", "read team is  " +strLine);
+                    Log.d("SplashScreen", "finished reading favorites");
+
+                    tempFile = new File(cDir.getPath() + "/" + "favorite_schedule_array.txt");
+                    fReader = new FileReader(tempFile);
+                    bReader = new BufferedReader(fReader);
+
+                    if ((strLine = bReader.readLine()) != null) rows_count = Integer.parseInt(strLine);
+
+                    for (int j = 0; j < rows_count; j++) {
+                        RowSchedule schedule_row = new RowSchedule();
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_home(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_away(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_date(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_hour(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_place(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_address(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_home_score(strLine);
+                        if ((strLine = bReader.readLine()) != null) schedule_row.set_away_score(strLine);
+
+                        favorite_schedule_array.add(schedule_row);
+                    }
+
+                    tempFile = new File(cDir.getPath() + "/" + "favorite_ranking_array.txt");
+                    fReader = new FileReader(tempFile);
+                    bReader = new BufferedReader(fReader);
+
+                    if ((strLine = bReader.readLine()) != null) rows_count = Integer.parseInt(strLine);
+
+                    for (int j = 0; j < rows_count; j++) {
+                        RowRanking ranking_row = new RowRanking();
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_team(strLine);
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_points(strLine);
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_played(strLine);
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_wons(strLine);
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_set_won(strLine);
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_set_lost(strLine);
+                        if ((strLine = bReader.readLine()) != null) ranking_row.set_ratio(strLine);
+
+                        favorite_ranking_array.add(ranking_row);
+                    }
+
+                    // Substitute favorite schedule and rankings inside full ones
+                    Log.d("SplashScreen", "start substituting schedule of league " +MainActivity.favorite_league +" and team " +MainActivity.favorite_team);
+                    for (int i = 0; i < leagues_array.size(); i++) {
+                        if (leagues_array.get(i).equals(MainActivity.favorite_league))
+                            favorite_index = i;
+                    }
+
+                    Log.d("SplashScreen", "size of full_schedule_array is " +full_schedule_array.get(favorite_index).size());
+                    Log.d("SplashScreen", "size of favorite_schedule_array is " +favorite_schedule_array.size());
+                    for (int i=0; i<full_schedule_array.get(favorite_index).size(); i++) {
+                        full_schedule_array.get(favorite_index).set(i, favorite_schedule_array.get(i));
+                    }
+
+                    Log.d("SplashScreen", "size of full_ranking_array is " +full_ranking_array.get(favorite_index).size());
+                    Log.d("SplashScreen", "size of favorite_ranking_array is " +favorite_ranking_array.size());
+                    for (int i=0; i<full_ranking_array.get(favorite_index).size(); i++) {
+                        full_ranking_array.get(favorite_index).set(i, favorite_ranking_array.get(i));
+                    }
+                    Log.d("SplashScreen", "favorites schedule and ranking loaded successfully");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    // Do not reload all the data if favorite schedule/ranking are not present
+                    // Reset favorite league/team instead
+                    MainActivity.favorite_league = "";
+                    MainActivity.favorite_team = "";
+                    Log.d("SplashScreen", "favorites schedule and ranking not loaded!");
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();

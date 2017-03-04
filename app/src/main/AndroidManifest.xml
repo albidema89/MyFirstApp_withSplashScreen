@@ -9,7 +9,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:enabled="true">
 
         <!-- Splash screen -->
         <activity
@@ -30,15 +31,23 @@
             android:label="@string/app_name" >
         </activity>
 
-        <activity android:name=".DisplaySchedule" />
+        <activity android:name="com.example.myfirstapp_withsplashscreen.DisplaySchedule"
+            android:label="@string/app_name">
+        </activity>
 
-        <receiver android:name="UpdateServiceReceiver">
+        <receiver android:name="UpdateServiceReceiver"
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <category android:name="android.intent.category.HOME"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="com.example.myfirstapp_withsplashscreen.SINGLE_UPDATE"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="WriteFavoriteReceiver">
+            <intent-filter>
+                <action android:name="com.example.myfirstapp_withsplashscreen.WRITE_FAVORITE"/>
             </intent-filter>
         </receiver>
 
@@ -53,6 +62,7 @@
             <intent-filter>
                 <action android:name="UpdateIntent.SCHEDULED_UPDATE"/>
                 <action android:name="UpdateIntent.SINGLE_UPDATE"/>
+                <action android:name="UpdateIntent.FAVORITE_UPDATE"/>
             </intent-filter>
         </service>
 
