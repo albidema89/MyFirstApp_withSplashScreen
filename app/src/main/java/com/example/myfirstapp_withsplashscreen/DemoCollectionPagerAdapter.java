@@ -87,7 +87,7 @@ public class DemoCollectionPagerAdapter extends FragmentStatePagerAdapter {
 
                 int j = 0;
                 int table_size = SplashScreen.full_schedule_array.get(MainActivity.league_selected).size() - 1;
-                Log.d("myTag", "starting parsing the schedule table with " +table_size +" rows");
+                Log.d("PagerAdapter", "starting parsing the schedule table with " +table_size +" rows");
                 for(int i=0;i<SplashScreen.full_schedule_array.get(MainActivity.league_selected).size();i++)
                 {
                     if( (SplashScreen.full_schedule_array.get(MainActivity.league_selected).get(i).get_home().equals(MainActivity.team_selected)) |
@@ -341,7 +341,7 @@ public class DemoCollectionPagerAdapter extends FragmentStatePagerAdapter {
                 int actual_day = c.get(Calendar.DAY_OF_MONTH);
                 int actual_month = c.get(Calendar.MONTH) + 1;
                 int actual_year = c.get(Calendar.YEAR) - 2000;
-                Log.d("myTag", actual_day +" " +actual_month +" " +actual_year);
+                Log.d("PagerAdapter", actual_day +" " +actual_month +" " +actual_year);
 
                 // Highlight with bold the selected team's name and score with blue
                 // Color the next match
@@ -485,7 +485,7 @@ public class DemoCollectionPagerAdapter extends FragmentStatePagerAdapter {
                 int j = 0;
                 //Elements rows = MainActivity.arr_ranking.select("tr");
                 int table_size = SplashScreen.full_ranking_array.get(MainActivity.league_selected).size() - 1;
-                Log.d("myTag", "starting parsing the ranking table with " +table_size +" rows");
+                Log.d("PagerAdapter", "starting parsing the ranking table with " +table_size +" rows");
                 //for(int i=1;i<full_ranking_array.get(league_selected).size().size();i++) // la prima riga contiene le intestazioni della tabella e possiamo scartarla
                 for(int i=0;i<SplashScreen.full_ranking_array.get(MainActivity.league_selected).size();i++)
                 {
