@@ -446,7 +446,7 @@ public class SplashScreen extends Activity {
                     // Closing the writer object
                     writer.close();
 
-                    last_update = "Ultimo aggiornamento " +actual_day +"/" +actual_month +"/" +actual_year +" alle ore " +actual_hour +":" +actual_minute;
+                    last_update = "Ultimo aggiornamento globale: " +actual_day +"/" +actual_month +"/" +actual_year +" alle ore " +actual_hour +":" +actual_minute;
                 } catch (IOException e) {
                     e.printStackTrace();
                     last_update = "Aggiornamento automatico fallito, premere il tasto AGGIORNA";
