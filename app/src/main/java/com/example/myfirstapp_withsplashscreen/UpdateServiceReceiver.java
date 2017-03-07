@@ -20,7 +20,7 @@ public class UpdateServiceReceiver extends BroadcastReceiver
             ComponentName serviceComponent = new ComponentName(context, UpdateService.class);
             JobInfo.Builder builder = new JobInfo.Builder(0, serviceComponent);
             //builder.setPeriodic(3600 * 1000); // 1 hour periodicity
-            builder.setPeriodic(TimeUnit.MINUTES.toMillis(30));
+            builder.setPeriodic(TimeUnit.MINUTES.toMillis(60));
             builder.setPersisted(true);
             builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
             builder.setRequiresCharging(false); // we don't care if the device is charging or not
