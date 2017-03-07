@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.os.Environment;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -38,6 +39,10 @@ public class UpdateIntentService extends IntentService {
     ArrayList<RowSchedule> favorite_schedule_array = new ArrayList<RowSchedule>();
     ArrayList<RowRanking> favorite_ranking_array = new ArrayList<RowRanking>();
 
+    ArrayList<RowSchedule> old_favorite_schedule_array = new ArrayList<RowSchedule>();
+    ArrayList<String> score_updates = new ArrayList<>();
+    ArrayList<String> date_updates = new ArrayList<>();
+
     FileWriter writer;
     // Reading contents of the temporary file, if already exists
     File cDir;
@@ -53,33 +58,23 @@ public class UpdateIntentService extends IntentService {
     int last_update_month;
     int last_update_day;
 
-    //Intent resultIntent = new Intent(this, SplashScreen.class);
     Intent resultIntent;
 
     // Because clicking the notification opens a new ("special") activity, there's
     // no need to create an artificial back stack.
-    PendingIntent resultPendingIntent;/*
-    PendingIntent resultPendingIntent =
-            PendingIntent.getActivity(
-                    this,
-                    0,
-                    resultIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-            );
-*/
-    //NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
+    PendingIntent resultPendingIntent;
     NotificationCompat.Builder mBuilder;
 
     // Sets an ID for the notification
-    int mNotificationId = 001;
-    // Gets an instance of the NotificationManager service
-    //NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    int mNotificationId;
     NotificationManager mNotifyMgr;
 
     @Override
     protected void onHandleIntent(Intent intent) {
         String action = intent.getAction();
         Log.d("UpdateIntentService", "UpdateIntentService -- Starting with action " +action);
+
+        mNotificationId = 1;
 
         resultIntent = new Intent(this, SplashScreen.class);
         resultPendingIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -117,6 +112,8 @@ public class UpdateIntentService extends IntentService {
         Log.d("UpdateIntentService", "load_all is " +load_all);
 
         if(load_all) {
+            read_old_schedule();
+
             // Download and write all schedules and rankings
             load_all:
             try {
@@ -128,9 +125,6 @@ public class UpdateIntentService extends IntentService {
 
                 load_all_rankings();
                 write_all_rankings();
-                // 2017/03/02: before downloading favorites, you should read the favorite TXT file!
-                //download_favorite_schedule();
-                //write_favorite_schedule();
             } catch (Exception e) {
                 e.printStackTrace();
 
@@ -156,6 +150,7 @@ public class UpdateIntentService extends IntentService {
                 mBuilder.setContentTitle("Aggiornamento incompleto");
                 if(should_break) mBuilder.setContentText("load_all: error during download_favorite!");
                 else mBuilder.setContentText("load_all: error on load_all AND download_favorite!");
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("load_all: error on load_all AND download_favorite!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
 
@@ -163,8 +158,6 @@ public class UpdateIntentService extends IntentService {
             }
         } else if(update_favorite) {
             Log.v("UpdateIntentService", "Entered in update_favorite branch");
-            // 2017/03/02: this service should never touch the favorite TXT file!
-            //write_favorite();
             read_favorite();
             Log.v("UpdateIntentService", "Favorite written");
 
@@ -186,12 +179,15 @@ public class UpdateIntentService extends IntentService {
 
                 mBuilder.setContentTitle("Aggiornamento fallito");
                 mBuilder.setContentText("Errore durante l'aggiornamento dei preferiti!");
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Errore durante l'aggiornamento dei preferiti!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
 
                 should_break = true;
             }
         } else {
+            read_old_schedule();
+
             load_favorite:
             try {
                 load_leagues();
@@ -208,6 +204,7 @@ public class UpdateIntentService extends IntentService {
 
                 mBuilder.setContentTitle("Aggiornamento fallito");
                 mBuilder.setContentText("Errore durante il download dei preferiti!");
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Errore durante il download dei preferiti!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
 
@@ -217,6 +214,7 @@ public class UpdateIntentService extends IntentService {
 
                 mBuilder.setContentTitle("Aggiornamento fallito (non IO)");
                 mBuilder.setContentText("Errore durante il download dei preferiti!");
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Errore durante il download dei preferiti!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
 
@@ -230,15 +228,95 @@ public class UpdateIntentService extends IntentService {
             startActivity(send_intent);
             mNotifyMgr.cancel(mNotificationId);
         } else {
-            if(!should_break & update_favorite) mBuilder.setContentText("Preferiti scritti correttamente!");
+            if(!should_break & update_favorite) {
+                mBuilder.setContentText("Preferiti scritti correttamente!");
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Preferiti scritti correttamente!"));
+                append_log("Preferiti scritti correttamente!");
+            }
             else {
-                if(!should_break & load_all) mBuilder.setContentText("Tutti i calendari sono stati aggiornati!");
-                else if(!should_break) mBuilder.setContentText("Preferiti aggiornati correttamente!");
+                if(!should_break & load_all) {
+                    mBuilder.setContentText("Tutti i calendari sono stati aggiornati!");
+                    mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Tutti i calendari sono stati aggiornati!"));
+                    append_log("Tutti i calendari sono stati aggiornati!");
+                }
+                else if(!should_break) {
+                    mBuilder.setContentText("Preferiti aggiornati correttamente!");
+                    mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Preferiti aggiornati correttamente!"));
+                    append_log("Preferiti aggiornati correttamente!");
+                }
                 mBuilder.setContentIntent(resultPendingIntent);
             }
             mBuilder.setAutoCancel(true);
             // Builds the notification and issues it.
-            mNotifyMgr.notify(mNotificationId, mBuilder.build());
+            //mNotifyMgr.notify(mNotificationId, mBuilder.build());
+        }
+
+        // TODO: better control of notifications ID
+        // for example: always use 1 for the previous, 2 for skip check and 3+ for updates notifcations,
+        // but you have to be sure to not re-use one of the 3+ if that notification has not been cancelled
+        // by user, otherwise you would override the update!
+        // 2017/03/07 update: now that you have big text inside notifications, consider to add all the updates
+        // in one single notification and, if it has not been removed, append the new ones to the existing ones!
+
+        // Checking if something has changed since last update
+        if(!update_favorite & !should_break) {
+            if(favorite_schedule_array.size() != old_favorite_schedule_array.size()) {
+                mBuilder.setContentTitle("Skipping changes check");
+                mBuilder.setContentText("Size of two arrays is different" +favorite_schedule_array.size() +" " +old_favorite_schedule_array.size());
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Size of two arrays is different" +favorite_schedule_array.size() +" " +old_favorite_schedule_array.size()));
+                mBuilder.setContentIntent(resultPendingIntent);
+                mBuilder.setAutoCancel(true);
+                //mNotifyMgr.notify(++mNotificationId, mBuilder.build());
+                append_log("Size of two arrays is different" +favorite_schedule_array.size() +" " +old_favorite_schedule_array.size());
+            } else {
+                check_score_updates();
+
+                if(score_updates.size() == 0) {
+                    mBuilder.setContentTitle(favorite_league +"(ID: " +(mNotificationId+1) +")");
+                    mBuilder.setContentText("Nessun nuovo risultato");
+                    mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Nessun nuovo risultato"));
+                    mBuilder.setContentIntent(resultPendingIntent);
+                    mBuilder.setAutoCancel(true);
+                    //mNotifyMgr.notify(++mNotificationId, mBuilder.build());
+                    append_log("Nessun nuovo risultato");
+                } else {
+                    for (int i = 0; i < score_updates.size(); i++) {
+                        mNotificationId = mNotifyMgr.getActiveNotifications().length;
+
+                        mBuilder.setContentTitle(favorite_league +" (ID: " +(mNotificationId+1) +")");
+                        mBuilder.setContentText(score_updates.get(i));
+                        mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(score_updates.get(i)));
+                        mBuilder.setContentIntent(resultPendingIntent);
+                        mBuilder.setAutoCancel(true);
+                        mNotifyMgr.notify(++mNotificationId, mBuilder.build());
+                        append_log(score_updates.get(i));
+                    }
+                }
+
+                check_date_updates();
+
+                if(date_updates.size() == 0) {
+                    mBuilder.setContentTitle(favorite_league +"(ID: " +(mNotificationId+1) +")");
+                    mBuilder.setContentText("Nessun cambio di data");
+                    mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Nessun cambio di data"));
+                    mBuilder.setContentIntent(resultPendingIntent);
+                    mBuilder.setAutoCancel(true);
+                    //mNotifyMgr.notify(++mNotificationId, mBuilder.build());
+                    append_log("Nessun cambio di data");
+                } else {
+                    for (int i = 0; i < date_updates.size(); i++) {
+                        mNotificationId = mNotifyMgr.getActiveNotifications().length;
+
+                        mBuilder.setContentTitle(favorite_league +" (ID: " +(mNotificationId+1) +")");
+                        mBuilder.setContentText(date_updates.get(i));
+                        mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(date_updates.get(i)));
+                        mBuilder.setContentIntent(resultPendingIntent);
+                        mBuilder.setAutoCancel(true);
+                        mNotifyMgr.notify(++mNotificationId, mBuilder.build());
+                        append_log(date_updates.get(i));
+                    }
+                }
+            }
         }
     }
 
@@ -402,8 +480,8 @@ public class UpdateIntentService extends IntentService {
             int actual_year = c.get(Calendar.YEAR) - 2000;
             int actual_hour = c.get(Calendar.HOUR_OF_DAY);
             int actual_minute = c.get(Calendar.MINUTE);
-            Log.d("myTag", actual_day +" " +actual_month +" " +actual_year);
-            Log.d("myTag", "hour" +actual_hour +" minutes " +actual_minute);
+            Log.d("UpdateIntentService", actual_day +" " +actual_month +" " +actual_year);
+            Log.d("UpdateIntentService", "hour" +actual_hour +" minutes " +actual_minute);
             writer.write(actual_day +"\n");
             writer.write(actual_month +"\n");
             writer.write(actual_year +"\n");
@@ -455,8 +533,8 @@ public class UpdateIntentService extends IntentService {
         int actual_year = c.get(Calendar.YEAR) - 2000;
         int actual_hour = c.get(Calendar.HOUR_OF_DAY);
         int actual_minute = c.get(Calendar.MINUTE);
-        Log.d("myTag", actual_day +" " +actual_month +" " +actual_year);
-        Log.d("myTag", "hour" +actual_hour +" minutes " +actual_minute);
+        Log.d("UpdateIntentService", actual_day +" " +actual_month +" " +actual_year);
+        Log.d("UpdateIntentService", "hour" +actual_hour +" minutes " +actual_minute);
 
         return( (actual_year >last_update_year) ||
                 (actual_year==last_update_year) && (actual_month >last_update_month) ||
@@ -466,7 +544,6 @@ public class UpdateIntentService extends IntentService {
     void download_favorite_schedule () throws Exception {
         // Obtain http link to favorite league schedule
         for (int i = 0; i < leagues_array.size(); i++) {
-            //if(leagues_array.get(i).equals(MainActivity.favorite_league)) favorite_league_link = leagues_links_array.get(i);
             if(leagues_array.get(i).equals(favorite_league)) favorite_league_link = leagues_links_array.get(i);
         }
         Document schedule_doc = Jsoup.connect(favorite_league_link).get();
@@ -574,33 +651,7 @@ public class UpdateIntentService extends IntentService {
             mBuilder.setAutoCancel(true);
         }
     }
-/*
-    void write_favorite () {
-        cDir = getBaseContext().getCacheDir();
-        tempFile = new File(cDir.getPath() + "/" + "favorite.txt");
-        try {
-            writer = new FileWriter(tempFile);
 
-            Log.d("UpdateIntentService", "write_favorite() -- Writing league: " +MainActivity.favorite_league);
-            writer.write(MainActivity.favorite_league +"\n");
-            Log.d("UpdateIntentService", "write_favorite() -- Writing team: " +MainActivity.favorite_team);
-            writer.write(MainActivity.favorite_team +"\n");
-
-            // Closing the writer object
-            writer.close();
-
-            favorite_league = MainActivity.favorite_league;
-            favorite_team = MainActivity.favorite_team;
-        } catch (IOException e) {
-            e.printStackTrace();
-
-            mBuilder.setContentTitle("Aggiornamento fallito");
-            mBuilder.setContentText("Errore durante la scrittura dei preferiti!");
-            mBuilder.setContentIntent(resultPendingIntent);
-            mBuilder.setAutoCancel(true);
-        }
-    }
-*/
     void read_favorite () {
         cDir = getBaseContext().getCacheDir();
         tempFile = new File(cDir.getPath() + "/" + "favorite.txt");
@@ -616,6 +667,107 @@ public class UpdateIntentService extends IntentService {
             Log.d("UpdateIntentService", "Lettura di favorite.txt fallita! Salto il download!");
             favorite_league = "";
             favorite_team = "";
+        }
+    }
+
+    void read_old_schedule () {
+        cDir = getBaseContext().getCacheDir();
+        tempFile = new File(cDir.getPath() + "/" + "favorite_schedule_array.txt");
+
+        int rows_count = 0;
+
+        try {
+            FileReader fReader = new FileReader(tempFile);
+            BufferedReader bReader = new BufferedReader(fReader);
+
+            if ((strLine = bReader.readLine()) != null) rows_count = Integer.parseInt(strLine);
+
+            for (int j = 0; j < rows_count; j++) {
+                RowSchedule schedule_row = new RowSchedule();
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_home(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_away(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_date(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_hour(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_place(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_address(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_home_score(strLine);
+                if ((strLine = bReader.readLine()) != null) schedule_row.set_away_score(strLine);
+
+                old_favorite_schedule_array.add(schedule_row);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            should_break = true;
+        }
+    }
+
+    void check_score_updates () {
+        score_updates.clear();
+        for (int i=0; i<old_favorite_schedule_array.size(); i++) {
+            String old_home = old_favorite_schedule_array.get(i).get_home();
+            String old_away = old_favorite_schedule_array.get(i).get_away();
+            String old_home_score = old_favorite_schedule_array.get(i).get_home_score();
+            String old_away_score = old_favorite_schedule_array.get(i).get_away_score();
+
+            for (int j=0; j<favorite_schedule_array.size(); j++) {
+                String home = favorite_schedule_array.get(j).get_home();
+                String away = favorite_schedule_array.get(j).get_away();
+                String home_score = favorite_schedule_array.get(j).get_home_score();
+                String away_score = favorite_schedule_array.get(j).get_away_score();
+
+                if(old_home.equals(home) & old_away.equals(away) & // is the same match
+                        (!(old_home_score.equals(home_score)) | !(old_away_score.equals(away_score))) ) { // at least one of the scores has changed
+                    //score_updates.add(home +" - " +away +": " +home_score +" - " +away_score);
+                    score_updates.add(home +" - " +away +": " +home_score +" - " +away_score +" (previous was " +old_home_score +" - " +old_away_score +")");
+                    Log.d("UpdateIntentService", score_updates.get(score_updates.size()-1));
+                }
+            }
+        }
+    }
+
+    void check_date_updates () {
+        date_updates.clear();
+        for (int i=0; i<old_favorite_schedule_array.size(); i++) {
+            String old_home = old_favorite_schedule_array.get(i).get_home();
+            String old_away = old_favorite_schedule_array.get(i).get_away();
+            String old_date = old_favorite_schedule_array.get(i).get_date();
+            String old_hour = old_favorite_schedule_array.get(i).get_hour();
+
+            for (int j=0; j<favorite_schedule_array.size(); j++) {
+                String home = favorite_schedule_array.get(j).get_home();
+                String away = favorite_schedule_array.get(j).get_away();
+                String date = favorite_schedule_array.get(j).get_date();
+                String hour = favorite_schedule_array.get(j).get_hour();
+
+                if(old_home.equals(home) & old_away.equals(away) & // is the same match
+                        (!(old_date.equals(date)) | !(old_hour.equals(hour))) ) { // at least one of date/hour has changed
+                    date_updates.add(home +" - " +away +": " +date +" - " +hour +" (previous was " +old_date +" - " +old_hour +")");
+                    Log.d("UpdateIntentService", date_updates.get(date_updates.size()-1));
+                }
+            }
+        }
+    }
+
+    void append_log (String string) {
+        cDir = getBaseContext().getFilesDir();
+        cDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+
+        // Make sure the Pictures directory exists.
+        cDir.mkdirs();
+
+        tempFile = new File(cDir.getPath() + "/" + "myfirstapp_log.txt");
+        Log.d("UpdateIntentService", "Writing at this path: " +cDir.getPath());
+        try {
+            if(tempFile.exists()) writer = new FileWriter(tempFile, true); // append mode
+            else {
+                tempFile.createNewFile();
+                writer = new FileWriter(tempFile);
+            }
+            writer.write(Calendar.getInstance().getTime() +" --- " +string +"\n");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
