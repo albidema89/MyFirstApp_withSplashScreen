@@ -1,10 +1,13 @@
 package com.example.myfirstapp_withsplashscreen;
 
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -84,7 +87,8 @@ public class UpdateIntentService extends IntentService {
         load_all = false; // by default, don't load all the schedules and rankings every time
         should_break = false; // by default, never break from IF branches
 
-        mBuilder.setSmallIcon(R.drawable.logo_fipav1);
+        mBuilder.setSmallIcon(R.drawable.ic_launcher_fipav);
+        mBuilder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_fipav));
         mBuilder.setContentTitle("Aggiornamento riuscito");
         mBuilder.setContentText("Calendari e classifiche aggiornati! " +SplashScreen.numero_di_prova);
 
@@ -257,6 +261,9 @@ public class UpdateIntentService extends IntentService {
         // by user, otherwise you would override the update!
         // 2017/03/07 update: now that you have big text inside notifications, consider to add all the updates
         // in one single notification and, if it has not been removed, append the new ones to the existing ones!
+
+        //StatusBarNotification sbn[] = mNotifyMgr.getActiveNotifications();
+        //sbn[0].getId()
 
         // Checking if something has changed since last update
         if(!update_favorite & !should_break) {
