@@ -68,6 +68,23 @@ public class SplashScreen extends Activity {
             // Getting a reference to temporary file, if created earlier
             File tempFile;
 
+            /* The idea is to emulate the "boot completed° intent when the app is first installed
+               You could read a file (which, after install, it will not be present) and, if not
+               present, scheduling the background service as it was meant for boot..
+               When you do that, you must wait until it is completed before reading the results ..
+               if you do this, you could delete all the part related to download from the internet!
+
+            while(key==null||key.length()==0){
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            */
+
             String strLine;
             int leagues_count = 0;
             int rows_count = 0;
