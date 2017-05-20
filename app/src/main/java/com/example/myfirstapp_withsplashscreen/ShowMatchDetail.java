@@ -4,8 +4,12 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 
 public class ShowMatchDetail extends DialogFragment {
 
@@ -47,13 +51,21 @@ public class ShowMatchDetail extends DialogFragment {
         // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         Log.d("myTag", "new builder");
-        builder.setMessage(home +" - " +away +"\n\n" +date +" - " +hour +"\n\n" +place +", " +address)/*
-                .setPositiveButton("INDIETRO", new DialogInterface.OnClickListener() {
+        builder.setMessage(home +" - " +away +"\n\n" +date +" - " +hour +"\n\n" +place +", " +address)
+                .setPositiveButton("MAPPA", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        // FIRE ZE MISSILES!
-                        Log.d("myTag", "selected sassi");
+                        Log.d("myTag", "selected mappa");
+
+                        Uri gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(address +", " +place));
+                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                        // this commented part serves the purpose to launch specifically Google Maps,
+                        // but this way it should be more cross-platform ready ...
+                        //mapIntent.setPackage("com.google.android.apps.maps");
+                        //if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                            startActivity(mapIntent);
+                        //}
                     }
-                })
+                })/*
                 .setNegativeButton("scemo", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // User cancelled the dialog
@@ -62,5 +74,12 @@ public class ShowMatchDetail extends DialogFragment {
                 })*/;
         // Create the AlertDialog object and return it
         return builder.create();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ((AlertDialog) getDialog()).getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        ((AlertDialog) getDialog()).getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 }
