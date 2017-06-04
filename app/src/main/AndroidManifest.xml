@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
     <application
         android:allowBackup="true"
@@ -42,6 +45,7 @@
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="com.example.myfirstapp_withsplashscreen.FIRST_STARTUP"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="com.example.myfirstapp_withsplashscreen.SINGLE_UPDATE"/>
@@ -54,6 +58,12 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="TestCalendarReceiver">
+            <intent-filter>
+                <action android:name="com.example.myfirstapp_withsplashscreen.TEST_CALENDAR"/>
+            </intent-filter>
+        </receiver>
+
         <service android:name="UpdateService"
             android:permission="android.permission.BIND_JOB_SERVICE" >
             <intent-filter>
@@ -63,6 +73,7 @@
 
         <service android:name="UpdateIntentService">
             <intent-filter>
+                <action android:name="UpdateIntent.FIRST_UPDATE"/>
                 <action android:name="UpdateIntent.SCHEDULED_UPDATE"/>
                 <action android:name="UpdateIntent.SINGLE_UPDATE"/>
                 <action android:name="UpdateIntent.FAVORITE_UPDATE"/>
