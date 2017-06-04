@@ -15,7 +15,8 @@ public class UpdateServiceReceiver extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent)
     {
-        if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
+        if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED) ||
+                intent.getAction().equals("com.example.myfirstapp_withsplashscreen.FIRST_STARTUP")) {
             Log.d("UpdateServiceReceiver", "UpdateServiceReceiver -- Received BOOT broadcast");
             ComponentName serviceComponent = new ComponentName(context, UpdateService.class);
             JobInfo.Builder builder = new JobInfo.Builder(0, serviceComponent);
