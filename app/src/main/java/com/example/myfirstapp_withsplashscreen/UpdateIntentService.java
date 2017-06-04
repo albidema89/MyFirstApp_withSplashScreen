@@ -1,5 +1,7 @@
 package com.example.myfirstapp_withsplashscreen;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -9,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.jsoup.Jsoup;
@@ -72,6 +75,9 @@ public class UpdateIntentService extends IntentService {
     int mNotificationId;
     NotificationManager mNotifyMgr;
 
+    // Variables for calendar update
+    String account;
+
     @Override
     protected void onHandleIntent(Intent intent) {
         String action = intent.getAction();
@@ -100,6 +106,8 @@ public class UpdateIntentService extends IntentService {
             load_all = true; // set flag in order to load all schedules and rankings, no matter last update time
         } else if(action.equals("UpdateIntent.FAVORITE_UPDATE")) {
             update_favorite = true;
+        } else if(action.equals("UpdateIntent.FIRST_UPDATE")) {
+            load_all = true;
         }
 
         if(!update_favorite) {
@@ -148,6 +156,11 @@ public class UpdateIntentService extends IntentService {
                     download_favorite_ranking();
                     write_favorite_ranking();
                 }
+
+                account = getUserAccount();
+
+                Log.d("UpdateIntentService", "sending broadcast TRUE");
+                sendBroadcast(true);
             } catch (Exception e) {
                 e.printStackTrace();
 
@@ -157,6 +170,9 @@ public class UpdateIntentService extends IntentService {
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("load_all: error on load_all AND download_favorite!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
+
+                Log.d("UpdateIntentService", "sending broadcast FALSE");
+                sendBroadcast(false);
 
                 should_break = true;
             }
@@ -177,6 +193,9 @@ public class UpdateIntentService extends IntentService {
                     download_favorite_ranking();
                     write_favorite_ranking();
                     Log.v("UpdateIntentService", "Updated ranking");
+
+                    Log.d("UpdateIntentService", "sending broadcast TRUE");
+                    sendBroadcast(true);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -186,6 +205,9 @@ public class UpdateIntentService extends IntentService {
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Errore durante l'aggiornamento dei preferiti!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
+
+                Log.d("UpdateIntentService", "sending broadcast FALSE");
+                sendBroadcast(false);
 
                 should_break = true;
             }
@@ -203,6 +225,9 @@ public class UpdateIntentService extends IntentService {
                     download_favorite_ranking();
                     write_favorite_ranking();
                 }
+
+                Log.d("UpdateIntentService", "sending broadcast TRUE");
+                sendBroadcast(true);
             } catch (IOException e) {
                 e.printStackTrace();
 
@@ -211,6 +236,9 @@ public class UpdateIntentService extends IntentService {
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Errore durante il download dei preferiti!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
+
+                Log.d("UpdateIntentService", "sending broadcast FALSE");
+                sendBroadcast(false);
 
                 should_break = true;
             } catch (Exception e) {
@@ -221,6 +249,9 @@ public class UpdateIntentService extends IntentService {
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText("Errore durante il download dei preferiti!"));
                 mBuilder.setContentIntent(resultPendingIntent);
                 mBuilder.setAutoCancel(true);
+
+                Log.d("UpdateIntentService", "sending broadcast FALSE");
+                sendBroadcast(false);
 
                 should_break = true;
             }
@@ -325,6 +356,12 @@ public class UpdateIntentService extends IntentService {
                 }
             }
         }
+    }
+
+    private void sendBroadcast (boolean success){
+        Intent intent = new Intent ("UpdateIntentService.UPDATE_DONE"); //put the same message as in the filter you used in the activity when registering the receiver
+        intent.putExtra("success", success);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     void load_leagues () throws IOException {
@@ -776,5 +813,22 @@ public class UpdateIntentService extends IntentService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    String getUserAccount () {
+        AccountManager manager = (AccountManager) this.getSystemService(ACCOUNT_SERVICE);
+        Account[] list = manager.getAccounts();
+        String gmail = null;
+
+        for (Account account : list) {
+            //Log.d("TestCalendar", "Looking into account: " +account);
+            if (account.type.equalsIgnoreCase("com.google")) {
+                gmail = account.name;
+                //Log.d("TestCalendar", "Found account: " +gmail);
+                break;
+            }
+        }
+        Log.d("UpdateIntentService", "Returning account: " +gmail);
+        return gmail;
     }
 }
