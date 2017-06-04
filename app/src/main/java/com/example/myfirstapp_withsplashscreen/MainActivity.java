@@ -1,5 +1,6 @@
 package com.example.myfirstapp_withsplashscreen;
 
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,6 +14,10 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -24,6 +29,9 @@ public class MainActivity extends AppCompatActivity {
     Spinner leagues_sp;
     ArrayAdapter<String> teams_spinnerAdapter;
     Spinner teams_sp;
+    ArrayAdapter<String> leagues_listviewAdapter;
+
+    ArrayList<String> leagues_array;
 
     public static int league_selected;
     public static String team_selected;
@@ -44,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MainActivity", "favorite team is " +favorite_team);
 
         Intent intent = getIntent();
-        ArrayList<String> leagues_array = intent.getStringArrayListExtra("leagues");
+        leagues_array = intent.getStringArrayListExtra("leagues");
 
         for(int i=0; i<SplashScreen.full_teams_array.size(); i++){
             Collections.sort(SplashScreen.full_teams_array.get(i), String.CASE_INSENSITIVE_ORDER);
@@ -114,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
             { }
         });
 
+        leagues_spinnerAdapter.clear();
         for(int i=0; i<leagues_array.size(); i++) {
             leagues_spinnerAdapter.add(leagues_array.get(i));
         }
@@ -181,6 +190,58 @@ public class MainActivity extends AppCompatActivity {
 
         parent.addView(favorite);
         parent.addView(set_favorite);
+
+        Button test_calendar = new Button(this);
+        test_calendar.setLayoutParams(param);
+        test_calendar.setText("Prova calendario");
+        test_calendar.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Perform action on click
+                startTestCalendar(v);
+            }
+        });
+        parent.addView(test_calendar);
+/*
+        leagues_listviewAdapter = new ArrayAdapter<String>(this, R.layout.listview_row);
+        leagues_listviewAdapter.clear();
+        for(int i=0; i<leagues_array.size(); i++) { leagues_listviewAdapter.add(leagues_array.get(i)); }
+
+        final ListView listView = new ListView(this);
+        listView.setAdapter(leagues_listviewAdapter);
+        for(int i=0; i<listView.getCount(); i++) {
+            Log.d("MainActivity", "step " +i +" di leagues_sp: team is " +listView.getItemAtPosition(i).toString());
+            if(listView.getItemAtPosition(i).toString().equals(favorite_league)) listView.setSelection(i);
+        }
+        parent.addView(listView);
+*/
+        // put this at the end of the code, because the layout is created programmatically
+        String manufacturer1 = "xiaomi";
+        String manufacturer2 = "meizu";
+        if(manufacturer1.equalsIgnoreCase(android.os.Build.MANUFACTURER) ||
+           manufacturer2.equalsIgnoreCase(android.os.Build.MANUFACTURER)) {
+
+            //Log.d("MainActivity", "Manufacturer is " +manufacturer);
+            Log.d("MainActivity", "Manufacturer is " +android.os.Build.MANUFACTURER);
+
+            try {
+                File cDir = getBaseContext().getCacheDir();
+                File tempFile = new File(cDir.getPath() + "/" + "autostart_prompt.txt");
+                FileReader fReader = new FileReader(tempFile);
+                BufferedReader bReader = new BufferedReader(fReader);
+
+                if( !((bReader.readLine()).equals("dontask") ) ) {
+                    Log.d("MainActivity", "Showing autostart prompt because file does not say \"DON'T ASK\"");
+                    DialogFragment dialog = ShowAutostartPrompt.newInstance(android.os.Build.MANUFACTURER);
+                    dialog.show(this.getFragmentManager(), "autostart");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+
+                Log.d("MainActivity", "Showing autostart prompt because of no file");
+                DialogFragment dialog = ShowAutostartPrompt.newInstance(android.os.Build.MANUFACTURER);
+                dialog.show(this.getFragmentManager(), "autostart");
+            }
+        }
     }
 
     /** Called when the user clicks the Send button */
@@ -205,10 +266,22 @@ public class MainActivity extends AppCompatActivity {
         sendBroadcast(intent);
     }
 
+    /** Called when the user clicks the test_calendar button */
+    public void startTestCalendar (View view) {
+        Intent intent= new Intent();
+        intent.setAction("com.example.myfirstapp_withsplashscreen.TEST_CALENDAR");
+        sendBroadcast(intent);
+    }
+
     @Override
     protected void onResume() {
         last_update_view.setText(SplashScreen.last_update);
-        Log.d("myTag", "qui è scattato onResume");
         super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d("myTag", "qui è scattato onPause");
+        super.onPause();
     }
 }
