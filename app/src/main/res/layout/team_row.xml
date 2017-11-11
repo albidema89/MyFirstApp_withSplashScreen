@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/team_row">
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingTop="10dp"
+        android:textSize="15sp"
+        android:focusable="false"
+        android:id="@+id/team_row1" />
+    <!--
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:paddingBottom="10dp"
+            android:paddingStart="@dimen/activity_horizontal_margin"
+            android:paddingEnd="@dimen/activity_horizontal_margin"
+            android:paddingTop="10dp"
+            android:textSize="15sp"
+            android:focusable="false"
+            android:id="@+id/team_row2" />
+    -->
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:paddingBottom="10dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="@dimen/activity_horizontal_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:src="@drawable/ic_star_border_black_24dp"
+            android:focusable="false"
+            android:id="@+id/team_row2" />
+    <!--
+            android:background="@color/myWhite"
+            android:onClick="prova_bottone"-->
+
+</RelativeLayout>
