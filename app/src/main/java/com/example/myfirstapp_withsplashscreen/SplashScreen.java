@@ -26,6 +26,7 @@ public class SplashScreen extends Activity {
     static ArrayList<ArrayList<RowSchedule>> full_schedule_array = new ArrayList<ArrayList<RowSchedule>>();
     static ArrayList<ArrayList<RowRanking>> full_ranking_array = new ArrayList<ArrayList<RowRanking>>();
     static ArrayList<ArrayList> full_teams_array = new ArrayList<ArrayList>();
+    static ArrayList<String[]> new_favorites_array = new ArrayList<String[]>();
 
     ArrayList<RowSchedule> favorite_schedule_array = new ArrayList<RowSchedule>();
     ArrayList<RowRanking> favorite_ranking_array = new ArrayList<RowRanking>();
@@ -110,6 +111,14 @@ public class SplashScreen extends Activity {
                 MainActivity.favorite_league = "";
                 MainActivity.favorite_team = "";
                 Log.d("SplashScreen", "favorites schedule and ranking not loaded!");
+            }
+            // Try to load the NEW favorites
+            try {
+                read_favorites_new();
+            } catch (IOException e) {
+                e.printStackTrace();
+                new_favorites_array.clear();
+                Log.d("SplashScreen", "new favorites schedule and ranking not loaded!");
             }
 
             Log.d("SplashScreen", "Launching main activity");
@@ -374,6 +383,23 @@ public class SplashScreen extends Activity {
         for (int i=0; i<full_ranking_array.get(favorite_index).size(); i++) {
             full_ranking_array.get(favorite_index).set(i, favorite_ranking_array.get(i));
         }
+        Log.d("SplashScreen", "favorites schedule and ranking loaded successfully");
+    }
+
+    void read_favorites_new () throws IOException {
+        Log.d("SplashScreen", "starting reading NEW favorites");
+        File inputFile = new File(getBaseContext().getCacheDir().getPath() + "/" + "favorite_new.txt");
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+
+        String currentLine;
+        Integer i = 0;
+        new_favorites_array.clear();
+        while ((currentLine = reader.readLine()) != null) {
+            new_favorites_array.add(currentLine.split(",,,"));
+            Log.d("SplashScreen", "Added team "+new_favorites_array.get(i)[1]+" of league "+new_favorites_array.get(i)[0]);
+            i++;
+        }
+
         Log.d("SplashScreen", "favorites schedule and ranking loaded successfully");
     }
 }

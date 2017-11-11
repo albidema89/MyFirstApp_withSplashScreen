@@ -6,13 +6,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ExpandableListAdapter;
+import android.widget.ExpandableListView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.RelativeLayout;
+import android.widget.SimpleExpandableListAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.mySimpleExpandableListAdapter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,6 +27,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,6 +52,11 @@ public class MainActivity extends AppCompatActivity {
     static String selected_team = "";
 
     TextView last_update_view;
+
+    ExpandableListView expListView;
+    static mySimpleExpandableListAdapter expListAdapter;
+    List<String> listDataHeader;
+    HashMap<String, List<String>> listDataChild;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,9 +163,11 @@ public class MainActivity extends AppCompatActivity {
         invio.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Perform action on click
-                sendMessage(v);
+                showSchedule(v);
                 league_selected = leagues_sp.getSelectedItemPosition();
+                Log.d("MainActivity", "Selected league is " +league_selected);
                 team_selected = teams_sp.getSelectedItem().toString();
+                Log.d("MainActivity", "Selected team is " +team_selected);
             }
         });
 
@@ -201,26 +217,51 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         parent.addView(test_calendar);
-/*
-        leagues_listviewAdapter = new ArrayAdapter<String>(this, R.layout.listview_row);
-        leagues_listviewAdapter.clear();
-        for(int i=0; i<leagues_array.size(); i++) { leagues_listviewAdapter.add(leagues_array.get(i)); }
 
-        final ListView listView = new ListView(this);
-        listView.setAdapter(leagues_listviewAdapter);
-        for(int i=0; i<listView.getCount(); i++) {
-            Log.d("MainActivity", "step " +i +" di leagues_sp: team is " +listView.getItemAtPosition(i).toString());
-            if(listView.getItemAtPosition(i).toString().equals(favorite_league)) listView.setSelection(i);
+        // get the listview
+        expListView = new ExpandableListView(this);
+
+        //final mySimpleExpandableListAdapter expListAdapter =
+        expListAdapter =
+                new mySimpleExpandableListAdapter(
+                        this,
+                        createLeagueList(),            // Creating group List.
+                        R.layout.league_row,           // Group item layout XML.
+                        new String[] { "League" },     // the key of group item.
+                        new int[] { R.id.league_row1 }, // ID of each group item.-Data under the key goes into this TextView.
+                        createTeamList(),             // childData describes second-level entries.
+                        R.layout.team_row,             // Layout for sub-level entries(second level).
+                        new String[] {"Team", "Favorite"},         // Keys in childData maps to display.
+                        new int[] { R.id.team_row1, R.id.team_row2 }     // Data under the keys above go into these TextViews.
+                );
+
+        // setting list adapter
+        expListView.setAdapter(expListAdapter); // setting the adapter in the list.
+
+        // TODO: con più squadre preferite, questa espansione non ha più senso...
+        Log.d("MainActivity", "Group count is " +expListAdapter.getGroupCount());
+        for(int i=0; i<expListAdapter.getGroupCount(); i++) {
+            Log.d("MainActivity", "Children count is " +expListAdapter.getChildrenCount(i));
+            for(int j=0; j<expListAdapter.getChildrenCount(i); j++) {
+                if(expListAdapter.getChild(i, j).toString().replace("{Team=", "").replaceAll(", Favorite=\\d+\\}", "").equals(favorite_team) &&
+                        expListAdapter.getGroup(i).toString().replace("{League=", "").replace("}", "").equals(favorite_league)) {
+
+                    Log.d("MainActivity", "Group " +i +" Team " +j +" is the favorite");
+                    expListView.expandGroup(i);
+                }
+            }
         }
-        parent.addView(listView);
-*/
+
+        parent.addView(expListView);
+
+        //expListAdapter.setChild_team(0,0,"PROVA");
+
         // put this at the end of the code, because the layout is created programmatically
         String manufacturer1 = "xiaomi";
         String manufacturer2 = "meizu";
         if(manufacturer1.equalsIgnoreCase(android.os.Build.MANUFACTURER) ||
            manufacturer2.equalsIgnoreCase(android.os.Build.MANUFACTURER)) {
 
-            //Log.d("MainActivity", "Manufacturer is " +manufacturer);
             Log.d("MainActivity", "Manufacturer is " +android.os.Build.MANUFACTURER);
 
             try {
@@ -245,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /** Called when the user clicks the Send button */
-    public void sendMessage(View view) {
+    public void showSchedule(View view) {
         Intent intent = new Intent(this, DisplaySchedule.class);
         startActivity(intent);
     }
@@ -284,4 +325,55 @@ public class MainActivity extends AppCompatActivity {
         Log.d("myTag", "qui è scattato onPause");
         super.onPause();
     }
+
+    /* Creating the Hashmap for the row */
+    @SuppressWarnings("unchecked")
+    private List createLeagueList() {
+        ArrayList result = new ArrayList();
+        for( int i = 0 ; i < leagues_array.size() ; ++i ) {
+            HashMap m = new HashMap();
+            m.put( "League", leagues_array.get(i)); // the key and it's value.
+            result.add( m );
+        }
+        return (List)result;
+    }
+
+    /* Creating the HashMap for the children */
+    @SuppressWarnings("unchecked")
+    private List createTeamList() {
+
+        ArrayList result = new ArrayList();
+        for( int i = 0 ; i < leagues_array.size() ; ++i ) {
+          /* each group need each HashMap-Here for each group we have 3 subgroups */
+            ArrayList secList = new ArrayList();
+            for( int n = 0 ; n < SplashScreen.full_teams_array.get(i).size() ; n++ ) {
+                HashMap child = new HashMap();
+                child.put( "Team", SplashScreen.full_teams_array.get(i).get(n) );
+                boolean favorite_found = false;
+                for(int j=0; j<SplashScreen.new_favorites_array.size(); j++) {
+                    if(SplashScreen.full_teams_array.get(i).get(n).toString().equals(SplashScreen.new_favorites_array.get(j)[1]) &&
+                            leagues_array.get(i).equals(SplashScreen.new_favorites_array.get(j)[0]) ) {
+                        favorite_found = true;
+                    }
+                }
+                if(favorite_found) { child.put( "Favorite", "1" ); }
+                else { child.put( "Favorite", "0" ); }/*
+                if(SplashScreen.full_teams_array.get(i).get(n).toString().equals(favorite_team) &&
+                        leagues_array.get(i).equals(favorite_league) ) {
+                    child.put( "Favorite", "1" );
+                } else {
+                }
+                    child.put( "Favorite", "0" );/*
+                }*/
+                secList.add( child );
+            }
+            result.add( secList );
+        }
+        return result;
+    }
+/*
+    public void prova_bottone (View v) {
+        Log.d("MainActivity", "Click on button (from XML)");
+
+    }*/
 }

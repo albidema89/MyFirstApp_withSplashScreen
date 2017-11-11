@@ -58,6 +58,12 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="WriteFavoriteReceiver_new">
+            <intent-filter>
+                <action android:name="com.example.myfirstapp_withsplashscreen.WRITE_FAVORITE_NEW"/>
+            </intent-filter>
+        </receiver>
+
         <receiver android:name="TestCalendarReceiver">
             <intent-filter>
                 <action android:name="com.example.myfirstapp_withsplashscreen.TEST_CALENDAR"/>
